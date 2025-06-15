@@ -25,20 +25,88 @@ def get_last_actuals(n=20):
     df['Month'] = pd.to_datetime(df['Month'])
     return df[['Month', 'India total Consumption of Natural Gas (in BCM)']].tail(n)
 
-# --- UI Styling ---
+# --- Improved UI Styling ---
 st.markdown("""
     <style>
-    .main {background-color: #f5f7fa;}
-    .stButton>button {background-color: #0066cc; color: white; font-weight: bold; border-radius: 8px;}
-    .stDataFrame {background-color: #fff; border-radius: 8px; font-size: 1.1em;}
-    .stTable {background-color: #fff; border-radius: 8px;}
-    .stTextInput>div>div>input {border-radius: 8px;}
-    .stFileUploader {border-radius: 8px;}
-    .stNumberInput>div>input {border-radius: 8px;}
-    .stExpanderHeader {font-size: 1.2em; color: #0a2342;}
-    .stExpanderContent {background-color: #eaf0fa; border-radius: 8px;}
-    .stDownloadButton {background-color: #009933; color: white; border-radius: 8px;}
-    .stMarkdown h4 {color: #0a2342;}
+    body, .main {
+        background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%) !important;
+    }
+    .stApp {
+        background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%) !important;
+    }
+    .stButton>button {
+        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+        color: #fff;
+        font-weight: bold;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(30,60,114,0.15);
+        transition: background 0.3s;
+    }
+    .stButton>button:hover {
+        background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+    }
+    .stDataFrame, .stTable {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(44,62,80,0.08);
+        font-size: 1.1em;
+        margin-bottom: 1em;
+    }
+    .stTextInput>div>div>input, .stNumberInput>div>input {
+        border-radius: 8px;
+        background: #f7fafc;
+        border: 1px solid #b6c6e3;
+    }
+    .stFileUploader {
+        border-radius: 8px;
+        background: #f7fafc;
+        border: 1px solid #b6c6e3;
+    }
+    .stExpanderHeader {
+        font-size: 1.2em;
+        color: #1e3c72;
+    }
+    .stExpanderContent {
+        background: #f0f4fa;
+        border-radius: 8px;
+    }
+    .stDownloadButton, .stMarkdown a button {
+        background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
+        color: #fff;
+        border-radius: 8px;
+        font-weight: bold;
+        box-shadow: 0 2px 8px rgba(67,206,162,0.15);
+        margin-top: 0.5em;
+        transition: background 0.3s;
+    }
+    .stDownloadButton:hover, .stMarkdown a button:hover {
+        background: linear-gradient(90deg, #185a9d 0%, #43cea2 100%);
+    }
+    .stMarkdown h4 {
+        color: #1e3c72;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    .stTitle, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: #1e3c72;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px rgba(30,60,114,0.08);
+    }
+    .stMarkdown small {
+        color: #185a9d;
+        font-size: 1em;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+        background: #e0eafc;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #b6c6e3;
+        border-radius: 8px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
