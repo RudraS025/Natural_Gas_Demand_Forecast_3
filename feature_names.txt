@@ -1,0 +1,37 @@
+Steel
+Petroleum Refinery
+Fertilizers
+Total Index
+Fertilizers.1
+Power
+Steel_lag1
+Steel_lag3
+Steel_lag6
+Total Index_lag1
+Total Index_lag3
+Total Index_lag6
+Petroleum Refinery_lag1
+Petroleum Refinery_lag3
+Petroleum Refinery_lag6
+Steel_rollmean3
+Steel_rollmean6
+Steel_rollmean12
+Total Index_rollmean3
+Total Index_rollmean6
+Total Index_rollmean12
+Petroleum Refinery_rollmean3
+Petroleum Refinery_rollmean6
+Petroleum Refinery_rollmean12
+Steel_rollstd3
+Steel_rollstd6
+Steel_rollstd12
+Total Index_rollstd3
+Total Index_rollstd6
+Total Index_rollstd12
+Petroleum Refinery_rollstd3
+Petroleum Refinery_rollstd6
+Petroleum Refinery_rollstd12
+month_sin
+month_cos
+quarter_sin
+quarter_cos
