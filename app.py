@@ -105,40 +105,6 @@ def feature_engineer(future_df, last_actuals, features):
     return history.iloc[last_actuals.shape[0]:][features]
 
 if forecast_btn and data_to_forecast is not None:
-    # Load last actuals for lags/rolling
-    last_actuals = pd.read_csv('last_actuals_full.csv')
-    last_actuals['Month'] = pd.to_datetime(last_actuals['Month'])
-    # Feature engineering
-    X_future = feature_engineer(data_to_forecast.copy(), last_actuals, features)
-    st.subheader('🔍 Model Input Preview (X_future)')
-    st.dataframe(X_future, use_container_width=True)
-    # Fill NA with 0 or forward fill for demo (production: handle more robustly)
-    X_future = X_future.fillna(method='ffill').fillna(0)
-    preds = model.predict(X_future)
-    # Clamp to 5.6-6.5 as in your script
-    preds = np.clip(preds, 5.6, 6.5)
-    forecast_df = data_to_forecast[['Month']].copy()
-    forecast_df['Forecasted_Natural_Gas_Consumption'] = preds
-    st.subheader('📈 Forecast Table (XGBoost)')
-    st.dataframe(forecast_df, use_container_width=True)
-    # --- Chart ---
-    st.subheader(':bar_chart: Actual vs Forecast Chart (XGBoost)')
-    last_actuals = get_last_actuals(20)
-    fig, ax = plt.subplots(figsize=(8,4))
-    ax.plot(last_actuals['Month'], last_actuals['India total Consumption of Natural Gas (in BCM)'], label='Actual', marker='o')
-    ax.plot(forecast_df['Month'], forecast_df['Forecasted_Natural_Gas_Consumption'], label='Forecast', marker='o', color='orange')
-    ax.set_xlabel('Month')
-    ax.set_ylabel('Natural Gas Consumption (BCM)')
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    st.pyplot(fig)
-    # Download option
-    towrite = BytesIO()
-    forecast_df.to_excel(towrite, index=False)
-    towrite.seek(0)
-    b64 = base64.b64encode(towrite.read()).decode()
-    st.markdown(f'<a href="data:application/octet-stream;base64,{b64}" download="forecast_results.xlsx"><button style="background-color:#0066cc;color:white;padding:8px 16px;border:none;border-radius:8px;font-weight:bold;">Download Forecast as Excel</button></a>', unsafe_allow_html=True)
-
     # --- Realistic (Script-style) Forecast Option ---
     st.subheader('📈 Realistic (Script-style) Forecast Table')
     # Use the same logic as in train_and_forecast.py
@@ -162,6 +128,7 @@ if forecast_btn and data_to_forecast is not None:
     forecast_df_script['Forecasted_Natural_Gas_Consumption'] = future_preds
     st.dataframe(forecast_df_script, use_container_width=True)
     st.subheader(':bar_chart: Actual vs Forecast Chart (Script-style)')
+    last_actuals = get_last_actuals(20)
     fig2, ax2 = plt.subplots(figsize=(8,4))
     ax2.plot(last_actuals['Month'], last_actuals['India total Consumption of Natural Gas (in BCM)'], label='Actual', marker='o')
     ax2.plot(forecast_df_script['Month'], forecast_df_script['Forecasted_Natural_Gas_Consumption'], label='Forecast (Script-style)', marker='o', color='green')
