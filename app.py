@@ -1,4 +1,5 @@
 import streamlit as st
+st.set_page_config(page_title="Natural Gas Demand Forecast", layout="wide")
 import pandas as pd
 import numpy as np
 import pickle
@@ -25,7 +26,6 @@ def get_last_actuals(n=20):
     return df[['Month', 'India total Consumption of Natural Gas (in BCM)']].tail(n)
 
 # --- UI Styling ---
-st.set_page_config(page_title="Natural Gas Demand Forecast", layout="wide")
 st.markdown("""
     <style>
     .main {background-color: #f5f7fa;}
