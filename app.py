@@ -2,10 +2,10 @@ import streamlit as st
 st.set_page_config(page_title="Natural Gas Demand Forecast", layout="wide")
 import pandas as pd
 import numpy as np
+import plotly.express as px
 import pickle
 import datetime
 import base64
-import matplotlib.pyplot as plt
 from io import BytesIO
 
 # --- Load model and feature info ---
@@ -30,10 +30,15 @@ st.markdown("""
     <style>
     .main {background-color: #f5f7fa;}
     .stButton>button {background-color: #0066cc; color: white; font-weight: bold; border-radius: 8px;}
-    .stDataFrame {background-color: #fff; border-radius: 8px;}
+    .stDataFrame {background-color: #fff; border-radius: 8px; font-size: 1.1em;}
     .stTable {background-color: #fff; border-radius: 8px;}
     .stTextInput>div>div>input {border-radius: 8px;}
     .stFileUploader {border-radius: 8px;}
+    .stNumberInput>div>input {border-radius: 8px;}
+    .stExpanderHeader {font-size: 1.2em; color: #0a2342;}
+    .stExpanderContent {background-color: #eaf0fa; border-radius: 8px;}
+    .stDownloadButton {background-color: #009933; color: white; border-radius: 8px;}
+    .stMarkdown h4 {color: #0a2342;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -105,9 +110,7 @@ def feature_engineer(future_df, last_actuals, features):
     return history.iloc[last_actuals.shape[0]:][features]
 
 if forecast_btn and data_to_forecast is not None:
-    # --- Realistic (Script-style) Forecast Option ---
-    st.subheader('📈 Realistic (Script-style) Forecast Table')
-    # Use the same logic as in train_and_forecast.py
+    # --- Forecast Table and Interactive Chart Side by Side ---
     forecast_min = 5.6
     forecast_max = 6.5
     n_forecast = data_to_forecast.shape[0]
@@ -125,24 +128,62 @@ if forecast_btn and data_to_forecast is not None:
         pred = max(forecast_min, min(forecast_max, pred))
         future_preds.append(pred)
     forecast_df_script = data_to_forecast[['Month']].copy()
-    forecast_df_script['Forecasted_Natural_Gas_Consumption'] = future_preds
-    st.dataframe(forecast_df_script, use_container_width=True)
-    st.subheader(':bar_chart: Actual vs Forecast Chart (Script-style)')
+    forecast_df_script['India total Consumption of Natural Gas (in BCM)'] = future_preds
+    forecast_df_script['Month'] = pd.to_datetime(forecast_df_script['Month']).dt.strftime('%Y-%m-%d')
+
+    # Get last actuals for chart
     last_actuals = get_last_actuals(20)
-    fig2, ax2 = plt.subplots(figsize=(8,4))
-    ax2.plot(last_actuals['Month'], last_actuals['India total Consumption of Natural Gas (in BCM)'], label='Actual', marker='o')
-    ax2.plot(forecast_df_script['Month'], forecast_df_script['Forecasted_Natural_Gas_Consumption'], label='Forecast (Script-style)', marker='o', color='green')
-    ax2.set_xlabel('Month')
-    ax2.set_ylabel('Natural Gas Consumption (BCM)')
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-    st.pyplot(fig2)
-    # Download option for script-style
-    towrite2 = BytesIO()
-    forecast_df_script.to_excel(towrite2, index=False)
-    towrite2.seek(0)
-    b64_2 = base64.b64encode(towrite2.read()).decode()
-    st.markdown(f'<a href="data:application/octet-stream;base64,{b64_2}" download="forecast_results_script_style.xlsx"><button style="background-color:#009933;color:white;padding:8px 16px;border:none;border-radius:8px;font-weight:bold;">Download Script-style Forecast as Excel</button></a>', unsafe_allow_html=True)
+    last_actuals['Type'] = 'Actual'
+    last_actuals = last_actuals.rename(columns={'India total Consumption of Natural Gas (in BCM)': 'Value'})
+    forecast_chart_df = forecast_df_script.copy()
+    forecast_chart_df['Type'] = 'Forecast'
+    forecast_chart_df = forecast_chart_df.rename(columns={'India total Consumption of Natural Gas (in BCM)': 'Value'})
+    chart_df = pd.concat([
+        last_actuals[['Month', 'Value', 'Type']],
+        forecast_chart_df[['Month', 'Value', 'Type']]
+    ], ignore_index=True)
+    chart_df['Month'] = pd.to_datetime(chart_df['Month'])
+
+    # Layout: Table and Chart Side by Side
+    table_col, chart_col = st.columns([1.1, 1.9], gap="large")
+    with table_col:
+        st.markdown("<h4 style='margin-bottom: 0.5em; color: #0a2342;'>Forecast - India total Consumption of Natural Gas (in BCM)</h4>", unsafe_allow_html=True)
+        st.dataframe(
+            forecast_df_script[['Month', 'India total Consumption of Natural Gas (in BCM)']],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Month": "Month",
+                "India total Consumption of Natural Gas (in BCM)": "India total Consumption of Natural Gas (in BCM)"
+            }
+        )
+        towrite2 = BytesIO()
+        forecast_df_script[['Month', 'India total Consumption of Natural Gas (in BCM)']].to_excel(towrite2, index=False)
+        towrite2.seek(0)
+        b64_2 = base64.b64encode(towrite2.read()).decode()
+        st.markdown(f'<a href="data:application/octet-stream;base64,{b64_2}" download="forecast_results.xlsx"><button style="background-color:#009933;color:white;padding:8px 16px;border:none;border-radius:8px;font-weight:bold;">Download Forecast as Excel</button></a>', unsafe_allow_html=True)
+    with chart_col:
+        st.markdown("<h4 style='margin-bottom: 0.5em; color: #0a2342;'>Actual and Forecast - India total Consumption of Natural Gas (in BCM)</h4>", unsafe_allow_html=True)
+        fig = px.line(
+            chart_df,
+            x="Month",
+            y="Value",
+            color="Type",
+            markers=True,
+            color_discrete_map={"Actual": "#1f77b4", "Forecast": "#ff7f0e"},
+            labels={"Value": "Natural Gas Consumption (BCM)", "Month": "Month", "Type": ""},
+            hover_data={"Value": ':.2f', "Month": True, "Type": False}
+        )
+        fig.update_traces(line=dict(width=3), marker=dict(size=10))
+        fig.update_layout(
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=14)),
+            plot_bgcolor="#f5f7fa",
+            paper_bgcolor="#f5f7fa",
+            font=dict(family="Segoe UI, Arial", size=15, color="#0a2342"),
+            margin=dict(l=10, r=10, t=10, b=10),
+            hoverlabel=dict(bgcolor="#fff", font_size=15, font_family="Segoe UI, Arial")
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 st.markdown("""
 ---
