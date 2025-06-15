@@ -1,0 +1,16 @@
+# Exclude all files except those needed for inference
+*.png
+*.ipynb
+*.tsv
+*.json
+*.xlsx
+*.csv
+*.pkl
+catboost_info/
+# Allow only the files needed for the app
+!app.py
+!requirements.txt
+!Procfile
+!natural_gas_demand_xgb_model.pkl
+!feature_names.txt
+!last_actuals_full.csv
