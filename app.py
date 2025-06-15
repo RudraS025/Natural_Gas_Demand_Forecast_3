@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(page_title="Natural Gas Demand Forecast", layout="wide")
+st.set_page_config(page_title="Natural Gas Demand Forecast based on Fundamental Factors", layout="wide")
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -42,7 +42,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🔮 Natural Gas Demand Forecast")
+st.title("Natural Gas Demand Forecast based on Fundamental Factors")
 st.markdown("""
 #### Upload or manually enter up to 10 future periods of independent variables to forecast India's total natural gas consumption.
 """)
@@ -126,6 +126,8 @@ if forecast_btn and data_to_forecast is not None:
         noise = np.random.normal(0, 0.07)
         pred = midpoint + amplitude * sine + drift + noise
         pred = max(forecast_min, min(forecast_max, pred))
+        # Round to 2 decimal places
+        pred = round(pred, 2)
         future_preds.append(pred)
     forecast_df_script = data_to_forecast[['Month']].copy()
     forecast_df_script['India total Consumption of Natural Gas (in BCM)'] = future_preds
@@ -144,12 +146,17 @@ if forecast_btn and data_to_forecast is not None:
     ], ignore_index=True)
     chart_df['Month'] = pd.to_datetime(chart_df['Month'])
 
+    # Ensure all months are shown on x-axis and lines are connected
+    chart_df = chart_df.sort_values('Month')
+    # For a connected line, combine actual and forecast as one series for the line plot
+    chart_df['LineGroup'] = 1  # single group for continuous line
+
     # Layout: Table and Chart Side by Side
     table_col, chart_col = st.columns([1.1, 1.9], gap="large")
     with table_col:
         st.markdown("<h4 style='margin-bottom: 0.5em; color: #0a2342;'>Forecast - India total Consumption of Natural Gas (in BCM)</h4>", unsafe_allow_html=True)
         st.dataframe(
-            forecast_df_script[['Month', 'India total Consumption of Natural Gas (in BCM)']],
+            forecast_df_script[['Month', 'India total Consumption of Natural Gas (in BCM)']].style.format({"India total Consumption of Natural Gas (in BCM)": "{:.2f}"}),
             use_container_width=True,
             hide_index=True,
             column_config={
@@ -164,24 +171,53 @@ if forecast_btn and data_to_forecast is not None:
         st.markdown(f'<a href="data:application/octet-stream;base64,{b64_2}" download="forecast_results.xlsx"><button style="background-color:#009933;color:white;padding:8px 16px;border:none;border-radius:8px;font-weight:bold;">Download Forecast as Excel</button></a>', unsafe_allow_html=True)
     with chart_col:
         st.markdown("<h4 style='margin-bottom: 0.5em; color: #0a2342;'>Actual and Forecast - India total Consumption of Natural Gas (in BCM)</h4>", unsafe_allow_html=True)
-        fig = px.line(
-            chart_df,
-            x="Month",
-            y="Value",
-            color="Type",
-            markers=True,
-            color_discrete_map={"Actual": "#1f77b4", "Forecast": "#ff7f0e"},
-            labels={"Value": "Natural Gas Consumption (BCM)", "Month": "Month", "Type": ""},
-            hover_data={"Value": ':.2f', "Month": True, "Type": False}
-        )
-        fig.update_traces(line=dict(width=3), marker=dict(size=10))
+        import plotly.graph_objects as go
+        fig = go.Figure()
+        # Plot actuals
+        fig.add_trace(go.Scatter(
+            x=last_actuals['Month'],
+            y=last_actuals['Value'],
+            mode='lines+markers',
+            name='Actual',
+            line=dict(color='#1f77b4', width=3),
+            marker=dict(size=10)
+        ))
+        # Plot forecast, connected to actuals
+        fig.add_trace(go.Scatter(
+            x=forecast_chart_df['Month'],
+            y=forecast_chart_df['Value'],
+            mode='lines+markers',
+            name='Forecast',
+            line=dict(color='#ff7f0e', width=3, dash='solid'),
+            marker=dict(size=10)
+        ))
+        # Connect last actual to first forecast
+        if not last_actuals.empty and not forecast_chart_df.empty:
+            fig.add_trace(go.Scatter(
+                x=[last_actuals['Month'].iloc[-1], forecast_chart_df['Month'].iloc[0]],
+                y=[last_actuals['Value'].iloc[-1], forecast_chart_df['Value'].iloc[0]],
+                mode='lines',
+                line=dict(color='#ff7f0e', width=2, dash='dot'),
+                showlegend=False
+            ))
         fig.update_layout(
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=14)),
             plot_bgcolor="#f5f7fa",
             paper_bgcolor="#f5f7fa",
             font=dict(family="Segoe UI, Arial", size=15, color="#0a2342"),
             margin=dict(l=10, r=10, t=10, b=10),
-            hoverlabel=dict(bgcolor="#fff", font_size=15, font_family="Segoe UI, Arial")
+            hoverlabel=dict(bgcolor="#fff", font_size=15, font_family="Segoe UI, Arial"),
+            xaxis=dict(
+                tickformat="%b %Y",
+                dtick="M1",
+                showgrid=True,
+                gridcolor="#eaf0fa",
+                tickangle=45
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor="#eaf0fa"
+            )
         )
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
