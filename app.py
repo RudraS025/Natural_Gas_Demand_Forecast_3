@@ -69,6 +69,10 @@ if uploaded_file and preview_btn:
     df = pd.read_excel(uploaded_file)
     st.subheader("Preview & Edit Uploaded Data")
     data_to_forecast = st.data_editor(df, num_rows="dynamic", key="excel_preview")
+    st.session_state['data_to_forecast'] = data_to_forecast
+elif 'data_to_forecast' in st.session_state:
+    st.subheader("Preview & Edit Uploaded Data")
+    data_to_forecast = st.data_editor(st.session_state['data_to_forecast'], num_rows="dynamic", key="excel_preview")
 elif not uploaded_file:
     st.subheader("Manual Data Entry Preview")
     data_to_forecast = manual_input
