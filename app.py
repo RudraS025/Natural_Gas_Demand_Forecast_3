@@ -20,7 +20,7 @@ model, features = load_model()
 
 # --- Load last actuals for chart ---
 def get_last_actuals(n=20):
-    df = pd.read_excel('NaturalGasDemand_Input.xlsx')
+    df = pd.read_csv('last_actuals_full.csv')
     df['Month'] = pd.to_datetime(df['Month'])
     return df[['Month', 'India total Consumption of Natural Gas (in BCM)']].tail(n)
 
