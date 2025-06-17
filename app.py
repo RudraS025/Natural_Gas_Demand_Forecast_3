@@ -140,15 +140,36 @@ with st.expander("1️⃣ Upload Excel or Enter Manually", expanded=True):
 data_to_forecast = None
 if uploaded_file and preview_btn:
     df = pd.read_excel(uploaded_file)
+    # Format Month as 'Apr-2025' for display
+    if 'Month' in df.columns:
+        df['Month'] = pd.to_datetime(df['Month']).dt.strftime('%b-%Y')
+    # Format all independent variable columns to 2 decimal places
+    for col in df.columns:
+        if col != 'Month':
+            df[col] = pd.to_numeric(df[col], errors='coerce').round(2)
     st.subheader("Preview & Edit Uploaded Data")
     data_to_forecast = st.data_editor(df, num_rows="dynamic", key="excel_preview")
     st.session_state['data_to_forecast'] = data_to_forecast
 elif 'data_to_forecast' in st.session_state:
+    df = st.session_state['data_to_forecast']
+    # Format Month as 'Apr-2025' for display
+    if 'Month' in df.columns:
+        df['Month'] = pd.to_datetime(df['Month'], errors='coerce').dt.strftime('%b-%Y')
+    # Format all independent variable columns to 2 decimal places
+    for col in df.columns:
+        if col != 'Month':
+            df[col] = pd.to_numeric(df[col], errors='coerce').round(2)
     st.subheader("Preview & Edit Uploaded Data")
-    data_to_forecast = st.data_editor(st.session_state['data_to_forecast'], num_rows="dynamic", key="excel_preview")
+    data_to_forecast = st.data_editor(df, num_rows="dynamic", key="excel_preview")
 elif not uploaded_file:
+    manual_df_disp = manual_input.copy()
+    if 'Month' in manual_df_disp.columns:
+        manual_df_disp['Month'] = pd.to_datetime(manual_df_disp['Month'], errors='coerce').dt.strftime('%b-%Y')
+    for col in manual_df_disp.columns:
+        if col != 'Month':
+            manual_df_disp[col] = pd.to_numeric(manual_df_disp[col], errors='coerce').round(2)
     st.subheader("Manual Data Entry Preview")
-    data_to_forecast = manual_input
+    data_to_forecast = manual_df_disp
 
 # --- Forecast Button ---
 forecast_btn = st.button("Forecast", type="primary")
@@ -223,8 +244,11 @@ if forecast_btn and data_to_forecast is not None:
     table_col, chart_col = st.columns([1.1, 1.9], gap="large")
     with table_col:
         st.markdown("<h4 style='margin-bottom: 0.5em; color: #0a2342;'>Forecast - India total Consumption of Natural Gas (in BCM)</h4>", unsafe_allow_html=True)
+        # Format Month as 'Apr-2025' for display
+        forecast_display_df = forecast_df_script.copy()
+        forecast_display_df['Month'] = pd.to_datetime(forecast_display_df['Month']).dt.strftime('%b-%Y')
         st.dataframe(
-            forecast_df_script[['Month', 'India total Consumption of Natural Gas (in BCM)']].style.format({"India total Consumption of Natural Gas (in BCM)": "{:.2f}"}),
+            forecast_display_df[['Month', 'India total Consumption of Natural Gas (in BCM)']].style.format({"India total Consumption of Natural Gas (in BCM)": "{:.2f}"}),
             use_container_width=True,
             hide_index=True,
             column_config={
@@ -265,7 +289,7 @@ if forecast_btn and data_to_forecast is not None:
                 x=[last_actuals['Month'].iloc[-1], forecast_chart_df['Month'].iloc[0]],
                 y=[last_actuals['Value'].iloc[-1], forecast_chart_df['Value'].iloc[0]],
                 mode='lines',
-                line=dict(color='#ff7f0e', width=2, dash='dot'),
+                line=dict(color='#ff7f0e', width=3, dash='solid'),  # match forecast line
                 showlegend=False
             ))
         fig.update_layout(
